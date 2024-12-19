@@ -1,4 +1,5 @@
 const express = require("express");
+const validator = require("validator");
 
 // const {adminAuth} = require("./middleware/auth")
 const connectDB = require("./config/database");
@@ -12,6 +13,9 @@ app.post("/signup", async (req, res) => {
   const user = new User(req.body);
 
   try {
+    if(!validator.isEmail(user.emailId)){
+      throw new Error('Invalid email');
+    }
     await user.save();
     res.send("user created successfully");
   } catch (error) {
@@ -54,10 +58,20 @@ app.delete("/user",async(req, res) =>{
   }
 })
 
-app.patch('/user',async (req,res)=>{
-  const userId = req.body.userId;
+app.patch('/user/:userId',async (req,res)=>{
+  const userId = req.params?.userId;
   const data = req.body;
   try {
+    const ALLOWED_UPDATES = ["firstName", "lastName", "skills"]
+    const isAllowedUpdate = Object.keys(data).every((k)=>
+      ALLOWED_UPDATES.includes(k)
+    )
+    if(data.skills.length > 3){
+      throw new Error("Maximum skills length exceeded")
+    }
+    if(!isAllowedUpdate){
+      throw new Error('Invalid update')
+    }
     console.log(userId);
     const user = await User.findByIdAndUpdate({_id:userId}, data);
 
