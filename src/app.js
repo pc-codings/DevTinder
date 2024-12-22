@@ -1,5 +1,6 @@
 const express = require("express");
 const validator = require("validator");
+const bcrypt = require("bcrypt");
 
 // const {adminAuth} = require("./middleware/auth")
 const connectDB = require("./config/database");
@@ -10,9 +11,16 @@ const app = express();
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-  const user = new User(req.body);
 
   try {
+    const {firstName, lastName,emailId,password} = req.body;
+    const hashPassword = await bcrypt.hash(password,10);
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: hashPassword,
+    })
     if(!validator.isEmail(user.emailId)){
       throw new Error('Invalid email');
     }
@@ -22,6 +30,23 @@ app.post("/signup", async (req, res) => {
     res.status(400).send("user not created: " + error.message);
   }
 });
+
+app.post('/login', async (req, res) => {
+  try{
+    const {emailId,password} = req.body;
+    const user = await User.findOne({emailId:emailId});
+    if(!user){
+      throw new Error("User not found");
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if(!isPasswordValid){
+      throw new Error("Invalid Credentials");
+    }
+    res.send("Login successful")
+  }catch (error) {
+    res.send(error.message)
+  }
+})
 
 app.get("/user", async (req, res) => {
     console.log(req.body);
