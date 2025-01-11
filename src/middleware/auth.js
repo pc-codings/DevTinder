@@ -6,7 +6,7 @@ const userAuth = async (req, res, next) => {
     const { token } = req.cookies;
 
     if (!token) {
-      res.status(400).send("Invalid User");
+      res.status(400).send("Please Login");
       return;  // Prevent further execution
     }
 
